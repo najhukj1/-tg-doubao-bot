@@ -16,10 +16,11 @@ logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s
 # 配置
 TELEGRAM_BOT_TOKEN = os.environ.get("TELEGRAM_BOT_TOKEN")
 DOUBAO_API_KEY = os.environ.get("DOUBAO_API_KEY")
-DOUBAO_API_URL = "https://ark.cn-beijing.volces.com/api/v3/chat/completions"
+# 替换为你的 32k 模型对应的 Endpoint ID
+DOUBAO_API_URL = "https://ep-20260304075356-66mff.ark.cn-beijing.volces.com/api/v3/chat/completions"
 
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    await context.bot.send_message(chat_id=update.effective_chat.id, text="👋 已连接豆包 AI！")
+    await context.bot.send_message(chat_id=update.effective_chat.id, text="👋 已连接豆包 32k AI！")
 
 async def reply_ai(update: Update, context: ContextTypes.DEFAULT_TYPE):
     if not update.message or not update.message.text:
@@ -28,7 +29,8 @@ async def reply_ai(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     try:
         data = {
-            "model": "doubao-lite-4k",
+            # 这里也替换为你的 32k 模型对应的 Endpoint ID
+            "model": "ep-20260304075356-66mff",
             "messages": [{"role": "user", "content": update.message.text}]
         }
         resp = requests.post(
@@ -40,7 +42,7 @@ async def reply_ai(update: Update, context: ContextTypes.DEFAULT_TYPE):
         if resp.status_code == 200:
             answer = resp.json()["choices"][0]["message"]["content"]
         else:
-            answer = f"Error: {resp.status_code}"
+            answer = f"Error: {resp.status_code}\n{resp.text}"
     except Exception as e:
         answer = f"出错：{str(e)}"
 
@@ -51,7 +53,6 @@ async def reply_ai(update: Update, context: ContextTypes.DEFAULT_TYPE):
     )
 
 def main():
-    """主函数，使用传统的 run_polling"""
     if not TELEGRAM_BOT_TOKEN:
         print("未发现 TOKEN")
         return
