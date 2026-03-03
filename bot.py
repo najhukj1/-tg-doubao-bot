@@ -1,6 +1,5 @@
 import os
 import requests
-import asyncio
 import logging
 from telegram import Update
 from telegram.ext import (
@@ -23,23 +22,33 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await context.bot.send_message(chat_id=update.effective_chat.id, text="👋 已连接豆包 AI！")
 
 async def reply_ai(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    if not update.message or not update.message.text: return
+    if not update.message or not update.message.text:
+        return
     msg = await context.bot.send_message(chat_id=update.effective_chat.id, text="思考中...")
-    
+
     try:
         data = {
             "model": "doubao-lite-4k",
             "messages": [{"role": "user", "content": update.message.text}]
         }
-        # 注意：requests 是同步的，在生产环境中建议换成 httpx，但目前为了修好报错先保持简单
-        resp = requests.post(DOUBAO_API_URL, json=data, 
-                             headers={"Authorization": f"Bearer {DOUBAO_API_KEY}", "Content-Type": "application/json"}, 
-                             timeout=30)
-        answer = resp.json()["choices"][0]["message"]["content"] if resp.status_code == 200 else f"Error: {resp.status_code}"
+        resp = requests.post(
+            DOUBAO_API_URL,
+            json=data,
+            headers={"Authorization": f"Bearer {DOUBAO_API_KEY}", "Content-Type": "application/json"},
+            timeout=30
+        )
+        if resp.status_code == 200:
+            answer = resp.json()["choices"][0]["message"]["content"]
+        else:
+            answer = f"Error: {resp.status_code}"
     except Exception as e:
         answer = f"出错：{str(e)}"
-    
-    await context.bot.edit_message_text(chat_id=update.effective_chat.id, message_id=msg.message_id, text=answer)
+
+    await context.bot.edit_message_text(
+        chat_id=update.effective_chat.id,
+        message_id=msg.message_id,
+        text=answer
+    )
 
 def main():
     """主函数，使用传统的 run_polling"""
@@ -50,7 +59,7 @@ def main():
     application = ApplicationBuilder().token(TELEGRAM_BOT_TOKEN).build()
     application.add_handler(CommandHandler("start", start))
     application.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, reply_ai))
-    
+
     print("正在启动机器人...")
     application.run_polling(drop_pending_updates=True)
 
