@@ -54,7 +54,13 @@ async def reply_ai(update: Update, context: ContextTypes.DEFAULT_TYPE):
     )
 
 if __name__ == "__main__":
-    application = ApplicationBuilder().token(TELEGRAM_BOT_TOKEN).build()
+    # 显式设置参数，避免内部属性冲突
+    application = (
+        ApplicationBuilder()
+        .token(TELEGRAM_BOT_TOKEN)
+        .concurrent_updates(False)  # 禁用并发更新
+        .build()
+    )
     start_handler = CommandHandler("start", start)
     echo_handler = MessageHandler(filters.TEXT & ~filters.COMMAND, reply_ai)
     application.add_handler(start_handler)
